@@ -7,8 +7,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class AppController {
 	
 	@RequestMapping("/")
-	public String login() {
-		return "login";
+	public String def() {
+		return home();
+	}
+	
+	@RequestMapping("/home")
+	public String home() {
+		return "home";
 	}
 
 }
