@@ -5,15 +5,17 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class H2Utils {
+	Connection conn;
 	
 	H2Utils() {
 		try {
 			Connection conn = DriverManager.getConnection("jdbc:h2:~/test", "sa", "");
 			ResultSet rs=conn.getMetaData().getTables(null, null, "POSTS", new String[] {"TABLE"});
 			if(rs.next()==false) {
-				PreparedStatement pst=conn.prepareStatement("create table posts (ID int primary key auto_increment,Title varchar(100), Body clob,Date date Default(getDate()) )");
+				PreparedStatement pst=conn.prepareStatement("create table posts (ID int primary key auto_increment,Title varchar(100), Body varchar(MAX),Date date Default(getDate()) )");
 				pst.execute();
 				PreparedStatement ps=conn.prepareStatement("insert into posts(title,body) values (?,?)");
 				ps.setString(1, "post1 title");
@@ -34,13 +36,41 @@ public class H2Utils {
 	}
 	
 	void addPost(String title,String body) throws SQLException{
-		Connection conn = DriverManager.getConnection("jdbc:h2:~/test", "sa", "");
+		conn = DriverManager.getConnection("jdbc:h2:~/test", "sa", "");
 		PreparedStatement ps=conn.prepareStatement("insert into posts(title,body) values (?,?)");
 		ps.setString(1, title);
 		ps.setString(2, body);
 		ps.execute();
 		conn.close();
-		
+	}
+	
+	ArrayList<Post> getPosts() throws SQLException {
+		conn=DriverManager.getConnection("jdbc:h2:~/test", "sa", "");
+		ArrayList<Post> arr=new ArrayList<Post>();
+		PreparedStatement ps=conn.prepareStatement("Select * from posts");
+		ResultSet res=ps.executeQuery();
+		while(res.next()) arr.add(new Post(res.getInt("ID"),res.getString("Title"),res.getString("Body"),res.getDate("Date")));
+		conn.close();
+		return arr;
+	}
+	
+	void deletePostByTitle(String title) throws SQLException {
+		conn = DriverManager.getConnection("jdbc:h2:~/test", "sa", "");
+		PreparedStatement ps=conn.prepareStatement("delete from posts where Title=?");
+		ps.setString(1, title);
+		ps.execute();
+		conn.close();
+	}
+	
+	void replacePostByTitle(String title,Post post) throws SQLException {
+		conn = DriverManager.getConnection("jdbc:h2:~/test", "sa", "");
+		PreparedStatement ps=conn.prepareStatement("update posts set Title=?, Body=?, Date=? where Title=?");
+		ps.setString(1, post.getTitle());
+		ps.setString(2, post.getBody());
+		ps.setDate(3, post.getDate());
+		ps.setString(4, title);
+		ps.execute();
+		conn.close();
 	}
 
 }
